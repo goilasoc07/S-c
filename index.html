@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goi La Soc - Script Gốc & Hướng Dẫn Cài Đặt Tampermonkey</title>
+    <style>
+        :root {
+            --bg: #0d0f14;
+            --card: #161922;
+            --border: #252836;
+            --accent: #00d4ff;
+            --accent2: #7b4dff;
+            --text: #e4e6f0;
+            --sub: #8b90a5;
+            --danger: #ff4757;
+            --success: #2ed573;
+            --code-bg: #0a0b10;
+            --step-bg: #1a1d2b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            background-image:
+                radial-gradient(ellipse at 30% 20%, rgba(0,212,255,0.04) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 70%, rgba(123,77,255,0.04) 0%, transparent 60%);
+            font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+        /* Header */
+        .header {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px 28px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+        }
+        .led {
+            width: 13px; height: 13px; border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 18px var(--accent), 0 0 40px rgba(0,212,255,0.5);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%,100% { box-shadow: 0 0 18px var(--accent), 0 0 40px rgba(0,212,255,0.5); }
+            50% { box-shadow: 0 0 30px var(--accent), 0 0 70px rgba(0,212,255,0.8); }
+        }
+        .header h1 {
+            font-size: 1.5em; font-weight: 800; letter-spacing: 2px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header .badge {
+            background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.25);
+            color: var(--accent); padding: 5px 14px; border-radius: 20px;
+            font-size: 0.7em; font-weight: 700; letter-spacing: 1px;
+        }
+
+        /* Section Titles */
+        .section-title {
+            font-size: 1.15em; font-weight: 700; letter-spacing: 1px;
+            margin-bottom: 14px; display: flex; align-items: center; gap: 10px;
+        }
+        .section-title .icon { font-size: 1.3em; }
+        .section-title .line {
+            flex: 1; height: 1px;
+            background: linear-gradient(90deg, var(--border), transparent);
+        }
+
+        /* Code Card */
+        .code-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 18px; overflow: hidden;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+        }
+        .code-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 18px; background: rgba(0,0,0,0.3);
+            border-bottom: 1px solid var(--border);
+        }
+        .dots { display: flex; gap: 7px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot.red { background: #ff5f57; } .dot.yellow { background: #ffbd2e; } .dot.green { background: #28c840; }
+        .file-name { font-size: 0.78em; color: var(--sub); letter-spacing: 1px; }
+        .copy-btn {
+            background: linear-gradient(135deg, rgba(0,212,255,0.12), rgba(123,77,255,0.12));
+            border: 1px solid rgba(255,255,255,0.08); color: var(--accent);
+            padding: 7px 16px; border-radius: 20px; cursor: pointer;
+            font-size: 0.75em; font-weight: 600; letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+        .copy-btn:hover { background: rgba(0,212,255,0.2); border-color: var(--accent); }
+        .copy-btn.copied { background: rgba(46,213,115,0.15); border-color: var(--success); color: var(--success); }
+
+        .code-body {
+            max-height: 450px; overflow-y: auto; position: relative;
+        }
+        .code-body::-webkit-scrollbar { width: 5px; }
+        .code-body::-webkit-scrollbar-track { background: transparent; }
+        .code-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 10px; }
+
+        .code-body pre {
+            padding: 18px 20px; margin: 0; background: var(--code-bg);
+            color: #c0c8d8; font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.72em; line-height: 1.65; white-space: pre-wrap; word-break: break-all;
+        }
+
+        /* Tutorial Card */
+        .tutorial-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 18px; padding: 24px 26px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+        }
+
+        .steps { display: flex; flex-direction: column; gap: 14px; }
+
+        .step {
+            display: flex; gap: 14px; align-items: flex-start;
+            padding: 16px 18px; background: var(--step-bg);
+            border-radius: 14px; border: 1px solid rgba(255,255,255,0.04);
+            transition: all 0.3s;
+        }
+        .step:hover { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.02); }
+
+        .step-num {
+            width: 34px; height: 34px; min-width: 34px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #000; font-weight: 800; display: flex;
+            align-items: center; justify-content: center; font-size: 0.8em;
+        }
+        .step-content h4 { font-size: 0.9em; font-weight: 700; margin-bottom: 4px; }
+        .step-content p { font-size: 0.78em; color: var(--sub); line-height: 1.5; }
+        .step-content .hl { color: var(--accent); font-weight: 600; }
+        .step-content .path {
+            background: rgba(0,0,0,0.35); padding: 2px 8px; border-radius: 5px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.8em; color: var(--accent2);
+        }
+        .step-img {
+            margin-top: 8px; border-radius: 10px; max-width: 100%;
+            border: 1px solid var(--border);
+        }
+
+        /* Mobile Images Placeholder */
+        .img-placeholder {
+            display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px;
+        }
+        .img-placeholder .img-box {
+            background: rgba(0,0,0,0.4); border: 1px dashed var(--border);
+            border-radius: 10px; padding: 30px 20px; text-align: center;
+            color: var(--sub); font-size: 0.7em; min-width: 120px; flex: 1;
+        }
+        .img-box .emoji { font-size: 2em; display: block; margin-bottom: 6px; }
+
+        .footer {
+            text-align: center; color: var(--sub); font-size: 0.65em;
+            letter-spacing: 1.5px; opacity: 0.5; padding: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.1em; }
+            .header { padding: 16px; }
+            .code-body pre { font-size: 0.65em; padding: 12px; }
+            .step { flex-direction: column; }
+            .step-num { margin-bottom: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- HEADER -->
+        <div class="header">
+            <div class="led"></div>
+            <h1>GOI LA SOC</h1>
+            <span class="badge"> By : Goilasoc</span>
+        </div>
+
+        <!-- CODE DISPLAY -->
+        <div class="code-card">
+            <div class="code-header">
+                <div class="dots">
+                    <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                </div>
+                <span class="file-name">📄 goilasoc_tool.js</span>
+                <button class="copy-btn" id="copyBtn" onclick="copyCode()">📋 COPY</button>
+            </div>
+            <div class="code-body">
+                <pre id="scriptCode"><code>// ==UserScript==
+// @name         Goi La Soc
+// @namespace    goilasoc
+// @version      1.0
+// @match        *://linkhuongdan.online/*
+// @grant        GM_setValue
+// @grant        GM_getValue
+// ==/UserScript==
+
+let vmp=typeof globalThis!=='undefined'?globalThis:typeof window!=='undefined'?window:global,vmw_c74f0c=vmp['vmw_c74f0c']||(vmp['vmw_c74f0c']={});
+const vmK_f72eef=(function(){var L=Object['defineProperty'],U=Object['create'],D=Object['getOwnPropertyDescriptor'],
+O=Object['getOwnPropertyNames'],c=Object['getOwnPropertySymbols'],Q=Object['setPrototypeOf'],K=Object['getPrototypeOf'],
+w=Function['prototype']['call'],G=Function['prototype']['apply'],l=Reflect['apply'],p=WeakMap['prototype']['set'],
+I=WeakMap['prototype']['get'],Z=WeakMap['prototype']['has'],h=WeakSet['prototype']['add'],z=WeakSet['prototype']['has'];
+let n=['srIdlcgAGBBcBAEIEl8weDNiMzkyYQgSXzB4MTE1YWYzCBJfMHg0Y2JhOTgIEl8weDEzNGRiYQgSXzB4NDYxNjgzCBJfMHg1OTExMWQIEl8weDMzYWY0OQgSXzB4NzA4ZTNkBAUEAAgUdXNlIHN0cmljdAgSZnV0dXJlTWFwCBZHTV9nZXRWYWx1ZQQCCAAIEGRvY3VtZW50CBpjcmVhdGVFbGVtZW50CAZkaXYEAQjsHwoKPHN0eWxlPgojcGFuZWwsI3BpbGx7CnRvdWNoLWFjdGlvbjpub25lOwp9CgojcGFuZWx7CnBvc2l0aW9uOmZpeGVkOwp0b3A6MTAwcHg7CnJpZ2h0OjE4cHg7CndpZHRoOjIyMHB4OwpwYWRkaW5nOjEwcHggMTJweDsKei1pbmRleDo5OTk5OTk5OTk7CmJvcmRlci1yYWRpdXM6MjZweDsKb3ZlcmZsb3c6aGlkZGVuOwpiYWNrZ3JvdW5kOgpsaW5lYXItZ3JhZGllbnQoCjE0NWRlZywKcmdiYSg4LDEyLDI0LC45NiksCnJnYmEoMCwwLDAsLjk2KQopOwpiYWNrZHJvcC1maWx0ZXI6Ymx1cigzMHB4KTsKYm9yZGVyOjFweCBzb2xpZCByZ2JhKDI1NSwyNTUsMjU1LC4wNik7CmJveC1zaGFkb3c6CjAgMCA1MHB4IHJnYmEoMCwyNTUsMjU1LC4xKTsKZm9udC1mYW1pbHk6QXJpYWw7CmNvbG9yOndoaXRlOwp9CgojaGVhZHsKZGlzcGxheTpmbGV4OwpqdXN0aWZ5LWNvbnRlbnQ6c3BhY2UtYmV0d2VlbjsKYWxpZ24taXRlbXM6Y2VudGVyOwptYXJnaW4tYm90dG9tOjZweDsKfQoKI2xlZnR7CmRpc3BsYXk6ZmxleDsKZ2FwOjhweDsKYWxpZ24taXRlbXM6Y2VudGVyOwpjdXJzb3I6bW92ZTsKfQoKI2xlZHsKd2lkdGg6OHB4OwpoZWlnaHQ6OHB4Owpib3JkZXItcmFkaXVzOjUwJTsKYmFja2dyb3VuZDpjeWFuOwpib3gtc2hhZG93OjAgMCAxNXB4IGN5YW47Cn0KCiN0aXRsZXsKZm9udC1zaXplOjExcHg7CmxldHRlci1zcGFjaW5nOjJweDsKY29sb3I6IzhlZjsKfQoKI2Nsb3NlewpwYWRkaW5nOjVweDsKY3Vyc29yOnBvaW50ZXI7CmZvbnQtc2l6ZToxOHB4Owp9CgoubGFiZWx7CmZvbnQtc2l6ZTo5cHg7Cm1hcmdpbjo1cHggMDsKY29sb3I6IzhlYTJiZjsKfQoKaW5wdXR7CndpZHRoOjEwMCU7CmJveC1zaXppbmc6Ym9yZGVyLWJveDsKcGFkZGluZzoxMHB4Owpib3JkZXI6bm9uZTsKb3V0bGluZTpub25lOwpib3JkZXItcmFkaXVzOjE1cHg7CmJhY2tncm91bmQ6CnJnYmEoMjU1LDI1NSwyNTUsLjA0KTsKY29sb3I6d2hpdGU7Cm1hcmdpbi1ib3R0b206OHB4Owp9Cgoucm93ewpkaXNwbGF5OmZsZXg7CmdhcDo4cHg7Cn0KCi5idG57CmZsZXg6MTsKaGVpZ2h0OjM0cHg7CmJvcmRlcjpub25lOwpib3JkZXItcmFkaXVzOjk5OXB4OwpiYWNrZ3JvdW5kOgpsaW5lYXItZ3JhZGllbnQoCjEzNWRlZywKcmdiYSgyNTUsMjU1LDI1NSwuMSksCnJnYmEoMCwyNTUsMjU1LC4xOCkKKTsKY29sb3I6d2hpdGU7CmZvbnQtd2VpZ2h0OjcwMDsKfQoKI3N0YXR1c3sKbWFyZ2luLXRvcDo4cHg7CnBhZGRpbmc6OHB4Owp0ZXh0LWFsaWduOmNlbnRlcjsKZm9udC1zaXplOjEwcHg7CmJvcmRlci1yYWRpdXM6OTk5cHg7CmJhY2tncm91bmQ6CnJnYmEoMjU1LDI1NSwyNTUsLjAzKTsKY29sb3I6IzlmZjsKfQoKI3BpbGx7CmRpc3BsYXk6bm9uZTsKcG9zaXRpb246Zml4ZWQ7CnRvcDoxMDBweDsKcmlnaHQ6MThweDsKcGFkZGluZzoxMnB4IDE4cHggMTJweCAzMnB4Owpib3JkZXItcmFkaXVzOjk5OXB4OwpjdXJzb3I6bW92ZTsKei1pbmRleDo5OTk5OTk5OTk7CmZvbnQtc2l6ZToxMHB4Owpjb2xvcjp3aGl0ZTsKYmFja2dyb3VuZDoKbGluZWFyLWdyYWRpZW50KAoxMzVkZWcsCnJnYmEoMjAsMzAsNTAsLjk1KSwKcmdiYSgwLDI1NSwyNTUsLjE1KQopOwp9CgoucHVsc2V7CnBvc2l0aW9uOmFic29sdXRlOwpsZWZ0OjE0cHg7CnRvcDo1MCU7CnRyYW5zZm9ybTp0cmFuc2xhdGVZKC01MCUpOwp3aWR0aDo4cHg7CmhlaWdodDo4cHg7CmJvcmRlci1yYWRpdXM6NTAlOwpiYWNrZ3JvdW5kOmN5YW47Cn0KPC9zdHlsZT4KCjxkaXYgaWQ9InBpbGwiPgo8ZGl2IGNsYXNzPSJwdWxzZSI+PC9kaXY+CiAgTVVBIENIRUFUIFZJUCBJQiBURUxFR1JBTSBAR09JTEFTT0MKPC9kaXY+Cgo8ZGl2IGlkPSJwYW5lbCI+Cgo8ZGl2IGlkPSJoZWFkIj4KCjxkaXYgaWQ9ImxlZnQiPgo8ZGl2IGlkPSJsZWQiPjwvZGl2Pgo8ZGl2IGlkPSJ0aXRsZSI+R29pIExhIFNvYzwvZGl2Pgo8L2Rpdj4KCjxkaXYgaWQ9ImNsb3NlIj7inJU8L2Rpdj4KCjwvZGl2PgoKPGRpdiBjbGFzcz0ibGFiZWwiPk3DgzwvZGl2Pgo8aW5wdXQgaWQ9ImNvZGUiIHZhbHVlPSIIfCI+Cgo8ZGl2IGNsYXNzPSJsYWJlbCI+TUnhu4BOPC9kaXY+CjxpbnB1dCBpZD0iZG9tYWluIiB2YWx1ZT0iCOwCIj4KCjxkaXYgY2xhc3M9InJvdyI+CjxidXR0b24gY2xhc3M9ImJ0biIgaWQ9InNhdmUiPkzGr1U8L2J1dHRvbj4KPGJ1dHRvbiBjbGFzcz0iYnRuIiBpZD0icnVuIj5TVEFSVDwvYnV0dG9uPgo8L2Rpdj4KCjxkaXYgaWQ9InN0YXR1cyI+ClNvYyBEYSBTYW4gU2FuZyBTZWFyY2ggQ2hvIEJhbgo8L2Rpdj4KCjwvZGl2PgoIEmlubmVySFRNTAgIYm9keQgMYXBwZW5kCBpxdWVyeVNlbGVjdG9yCAwjcGFuZWwICiNwaWxsCAojY29kZQgOI2RvbWFpbggOI3N0YXR1cwgMI2Nsb3NlBAYIDm9uY2xpY2sCCCBhZGRFdmVudExpc3RlbmVyCBR0b3VjaHN0YXJ0BAcIEnRvdWNobW92ZQQIBAkICiNzYXZlBAoICCNydW4EC/oCBAAECAQAAAQABgAAAgAGAQADAAYCAAQABgMABQAGBAAGAAYFAAcABgYACAAGBwAJAAQJAAQKBAAEAAQLAAQABAoEAAQBBAwABA0EDgQCAAQBBAEEAQAAAAAEDwQCBBAABBEEEgAABBMEAQQDBAMEFAQBAAat1gAABBUGrdYAAAQCAAat1gAABBYGrdYAAAQXAAQQBBgABBkEAwAABBMEAQAEEAAEGgQbAAAEEwQBBAIEEAAEGgQcAAAEEwQBBAMEEAAEGgQdAAAEEwQBBAQEEAAEGgQeAAAEEwQBBAUEEAAEGgQfAAAEEwQBBAYEEAAEGgQgAAAEEwQBBCEABCIABCMEBwQDAAQkBCUAAAQmAAAABA4EAgAEAwAEJAQnAAAEKAAAAAQOBAIABAMEKQAEIgAEEAAEGgQqAAAEEwQBBCsABCIABBAABBoELAAABBMEAQQtAAQiAAQAAAC2BKgBMqIEhgTwAfAB8AHwAfAB8AHwAfABMqIEMmZUMnKmBDJmhgQyavYDMmaMAZoCgAKmBI4EOCRyMoYE9gM4yAEyXFwypgKGBKYEMqYEkgGyBDKyBKYEkgGyBDKyBJQBcvYDyAE4yAGmBFxcMqYCcvYDOMgBMlxcMqYCVPYDOMgBMlxcMqYCVPYDOMgBMlxcMqYCVPYDOMgBMlxcMqYCVPYDOMgBMlxcMqYCVPYDOMgBMlxcMqYCVPYDOMgBMlxcMqYCMqIElAFyMpoCgAI4yAEyXFwyogRcXDKmAnKAAjjIATJcXDKiBFxcMqYCcoACMqIElAFy9gM4yAEyXFwypgIyogSUAXL2AzjIATJcXDKmAjKiBJQBcpgCAqwDAkZM'],
+q=['srCdtcgADjAIDHdpbmRvdwgSdW5kZWZpbmVkCA5wcm9jZXNzCAxvYmplY3QIDnJlcXVpcmUIEGZ1bmN0aW9uCAxnbG9iYWwIDmNvbnNvbGUIBmxvZwgId2FybggIaW5mbwgKZXJyb3IIEmV4Y2VwdGlvbggKdGFibGUICnRyYWNlBAAIDGxlbmd0aAgSXzB4M2IzOTJhCBZjb25zdHJ1Y3RvcggScHJvdG90eXBlCAhiaW5kBAEIEl9fcHJvdG9fXwgQdG9TdHJpbmfsAQQAtgQEAKgBBAC6AQQBMgai1gAAsgQA3AEEAPYDACYEAroBBAMyBqPWAACyBAA4ANwBAHIEBLoBBAUyBqPWAACyBAA4ANwBAHIEBroBBAMyBqPWAACyBADcAQQG9gMAJgDQAgQAhgQEAKYEBACmBAQHyAEAOAAkAHIAagQHlAEEAYYEAKoEBAgyAKgCBAkyAKgCBAoyAKgCBAsyAKgCBAwyAKgCBA0yAKgCBA4yAKgCBAKGBAQPMgQDhgQEA6YEBAKmBAQQyAEGvdYAALIEANwBBgAABACAAgQSyAEEE8gBADgEFMgBBgAABACAAgBcAFwEFTIEAaYCBASGBAQCpgQEA6YEAI4EBAWGBAQBpgQEBaYEAI4EADgAJAByBASmBAQGhgQEBKYEBgAABACAAgA4BBTIAQYAAAQAgAIAXABcBBUyBAGmAgQWlAEAcgQEpgQEBqYEBBfIAQA4BBTIAQQGpgQAXABcBBUyBAGmAgQXlAEAcgQBpgQEBaYEBASmBAC4BAByBAOmBACUAwA4ADoEA4YEAHIAJhQKEA42GCIkLi40MjZARnbsAZ4BpAHqAW4=',
+'srgNtcgAECAiBAAIEl8weDNiMzkyYQQCBAAIEGxvY2F0aW9uCAhocmVmCAptYXRjaAggXGJcZCsoPzotXGQrKT9cYggABAEIEGRvY3VtZW50CCBxdWVyeVNlbGVjdG9yQWxsCEpoMSxoMiwuZW50cnktdGl0bGUsLnBvc3QtdGl0bGUsc3Ryb25nAggSaW5uZXJUZXh0CAhib2R5CBJfMHg0OThlNDXOAbYEBACoAQQA0AIAMgQAogQAgAIGAAACADIEAmYEAoYEBACmBAQAMgQDZgQAcgD2AwQEyAEEBTgAyAEEBrgBBgcACABcAFwAMgQJpgIEAYYEBAGmBAQB3AEApgQEATIEA44EAKwDAKoEAPYDBAo4AMgBBAsyBAxcAFwAMgQJpgIEAZAEAIYEBAKmBAQC7AIAhgQEB3IAMgQNhgQECHIAMgQNhgQECHIAvgQEB8QCAIYEBASmBAQEyAEEDjgAJAByADIECIYEBAWmBAQFOADIAQQGuAEGBwAIAFwAXAAyBAmmAgQBhgQEBqYEBAbcAQCmBAQGMgQDjgQArAMAUAAmAC4ApgQECCQApgQEB4wEALQBAHIA9gMECsgBBA/IAQQOOADIAQQGuAEGBwAIAFwAXAAyBAmmAgQBhgQEA6YEBAPcAQCmBAQDMgQDjgQAJgAyBAisAwAQMDpkpgFwdowBlgGYAV6eAaQBwAHKAcgBzAECZgCcAaoB',
+'srCdtcgAAgoIEl8weDRkZWVkMwgKYXBwbHkIEl8weDUzZWIwZQgSYXJndW1lbnRzBAIogALcAYACOMgBgAJcXKQDXFwypgKGBLAEOIQCcqYErAMGAQABAAAGAQABAAAEAQYAAAEAAAAAAAAEBAQCBAAAAAYBAAEAAAQAAAICKA==',
+'srCVtcgAAAAA','srCdlcgEAgQMCBJfMHg1M2ViMGUIEl8weDRkZWVkMwgSXzB4NzdiZjE2BAIEAwIsBAAEAgQABAAABAEEAQAGAAACAAAEAwAABAQABAIEBQAGAAACAAAEAgC2BKgBfJoCcnyaAnKAAtwBMqIEJjKiBIYEMjiEAnKmBKwDBBIaGB4=',
+'srCVlcgAAAIGCBJfMHg3N2JmMTYDBAQQBAC2BAQBqAEGAAABAPABBAEyBACaAgQCMgCiBACsAw==',
+'srEVtcgAAAwIEl8weDRjYmE5OQgKc3R5bGUICG5vbmUIDmRpc3BsYXkIEl8weDEzNGRiYQgKYmxvY2sYtgSoAYACyAEylAFygALIATKUAXIEAAQABgIAAgAEAQQCBAMABgMAAgAEAQQFBAMA',
+'srGVtcgAAAQCCBJfMHg3MDhlM2QMtgQEAKgBBAAyBAA4AIQCBgcAAgCsAwA=',
+'srGVtcgAAAQDCBJfMHg3MDhlM2QMtgQEAKgBBAAyBAA4AIQCBgcAAgCsAwA=',
+'srEdtcgAAA4IEl8weDcwOGUzZAgSXzB4MTM0ZGJhCApzdHlsZQgIbm9uZQgOZGlzcGxheQgSXzB4NGNiYTk4CApibG9jayAEALYEBACoAQYHAAIAgAIA3AEAAgCsAwYDAAIAgAIEAsgBBAMyBASUAQByBgIAAgCAAgQCyAEEBjIEBJQBAHICBgw=',
+'srMVtcgAABgIEl8weDExNWFmMwgSXzB4NDYxNjgzCAp2YWx1ZQgIdHJpbQQACBJfMHg1OTExMWQIEmZ1dHVyZU1hcAgWR01fc2V0VmFsdWUEAggSXzB4MzNhZjQ5CBLEkMOjIGzGsHUIEmlubmVyVGV4dDi2BAQAqAEEAIACBgEAAgCAAgYEAAIAyAEEAjgAyAEEAzIEBKYCBACAAgYFAAIAyAEEAjgAyAEEAzIEBKYCBAC4BAByADIEBoACBgEAAgD2AwQHMgQIZgQCjAEAcgCAAgYGAAIAMgQKlAEEC3IA',
+'srEdtcgAAhwIEl8weDExNWFmMwgSXzB4NDYxNjgzCAp2YWx1ZQgIdHJpbQQACBJfMHgzM2FmNDkIOENIVUEgTFVVIEhPQUMgQ0hVQSBDTyBET01BSU4IEmlubmVyVGV4dAgMd2luZG93CAhvcGVuCDhodHRwczovL2dvb2dsZS5jb20vc2VhcmNoP3E9CApzaXRlOggkZW5jb2RlVVJJQ29tcG9uZW50BAFIBAAEAAYBAAIABgQAAgAEAgAEAwQEBAAABAAEAAAABgYAAgAEBgQHAAAABAgABAkECgQLBAAGrdYAAAQMBA0EAQat1gAAAAAEDQQBALYEqAGAAoACyAE4yAEypgKOBIYEpgSQA9wBgAIylAFyAqwD9gM4yAEyMqYEsgT2AzJmsgRcXDKmAnICGig='],
+d={'0':0x18e,'1':0x81,'2':0x61,'3':0xd2,'4':0x16e,'5':0x73,'6':0x92,'7':0x11f,'8':0xfa,'9':0x102,'10':0x26,'11':0x13f,'12':0x1fb,'13':0xad,'14':0xd7,'15':0x93,'16':0x192,'17':0x11d,'18':0x15f,'19':0x88,'20':0x1b1,'21':0x121,'22':0x82,'23':0x4c,'24':0x7,'25':0x37,'26':0x58,'27':0x15e,'28':0x4f,'29':0xf3,'32':0x1fa,'40':0xc3,'41':0xd0,'42':0x17a,'43':0x1d2,'44':0xbc,'45':0x134,'46':0x5e,'47':0x10,'50':0x1de,'51':0x187,'52':0x1ac,'53':0x1af,'54':0x1c0,'55':0x9a,'56':0xb3,'57':0x2e,'58':0xec,'59':0xb9,'60':0x118,'61':0x1ee,'62':0x10a,'63':0x57,'64':0x12,'65':0x2a,'70':0x139,'71':0xdb,'72':0x1e6,'73':0x11c,'74':0x190,'75':0x83,'76':0x8d,'77':0x6d,'78':0x13d,'79':0x51,'80':0x1b6,'81':0x19e,'82':0x136,'83':0x126,'84':0x172,'90':0x11b,'91':0xdf,'92':0x133,'93':0xa8,'94':0x17e,'95':0x127,'100':0x1e2,'101':0xb8,'102':0x8,'103':0xa7,'104':0xe1,'105':0x17b,'106':0xc8,'107':0x120,'110':0x1c4,'111':0x1c7,'112':0x10e,'120':0x53,'121':0xa6,'122':0xaa,'123':0x9b,'124':0x1be,'125':0x104,'126':0xb6,'127':0xa0,'128':0xf0,'129':0xef,'130':0x114,'131':0x12f,'132':0x1eb,'140':0x1d5,'141':0xcf,'142':0x25,'143':0x1a0,'144':0x108,'145':0x20,'146':0x19d,'147':0x17,'148':0x129,'149':0x17c,'160':0x4d,'161':0xf7,'162':0x3c,'163':0xde,'164':0x17f,'165':0x130,'166':0x1c5,'167':0x1bc,'168':0x16d,'169':0x7d,'180':0xd,'181':0x177,'182':0x77,'183':0x122,'184':0x1e7,'185':0x115,'200':0x86,'201':0xee,'202':0x10b,'210':0x80,'213':0x16,'214':0xac,'220':0x11a,'250':0x67,'251':0x6f,'252':0x1ba,'253':0xb2,'254':0xf6,'255':0x5,'256':0x1cb,'257':0x1bd,'258':0x1f2,'259':0x12c,'260':0x8f,'261':0xf2,'262':0xdc,'263':0x2d,'264':0x1aa,'265':0x1ec,'266':0x1f,'267':0x1ad,'268':0x1f5,'272':0xc2,'273':0x9f,'274':0xbd,'275':0xaf,'276':0xe8,'277':0x1e1,'278':0x16b,'279':0x11e,'280':0x14d,'281':0x140,'282':0xf1,'283':0x64,'284':0xba,'285':0x1a4,'286':0x21,'287':0x1ef,'293':0x72,'294':0x1b9,'295':0x19c'};
+const f=0x1,P=0x2,a=0x3,T=0x4,g=0x5e,Y=0x91,s=0x46,x=typeof 0x0n,W=[];let B=0x0;
+const M=function(){throw new TypeError('\x27caller\x27,\x20\x27callee\x27,\x20and\x20\x27arguments\x27\x20properties\x20may\x20not\x20be\x20accessed\x20on\x20strict\x20mode\x20functions\x20or\x20the\x20arguments\x20objects\x20for\x20calls\x20to\x20them');};
+Object['preventExtensions'](M);
+let y=new WeakSet(),X=new WeakSet();const u=Symbol();
+let t={'__proto__':null},J={'__proto__':null},C=0x1;
+function V(UL,UU){let UD=UL[u];UD===undefined&&(UD=C++,UL[u]=UD),t[UD]=UU,J[UD]=UL;}
+function A(UL){let UU=UL[u];if(UU===undefined)return undefined;return J[UU]===UL?t[UU]:undefined;}
+function N(UL){let UU=UL[u];return UU!==undefined&&J[UU]===UL;}
+let o=new WeakMap(),j=[],S=Array['prototype'][Symbol['iterator']],m=Symbol['iterator'],k=null,R=null,r=null,b=null,H=null;
+try{let UL=function*(){};k=K(UL),R=k&&k['prototype'];}catch(UU){}
+try{let UD=async function*(){};r=K(UD),b=r&&r['prototype'];}catch(UO){}
+try{let Uc=async function(){};H=K(Uc);}catch(UQ){}
+function v(UK,Uw,UG){try{L(UK,Uw,UG);}catch(Ul){}}
+function i(UK,Uw){let UG=new Array(Uw),Ul=![];for(let UI=Uw-0x1;UI>=0x0;UI--){let UZ=UK();UZ&&typeof UZ==='object'&&z['call'](y,UZ)?(Ul=!![],UG[UI]=UZ):UG[UI]=UZ;}if(!Ul)return UG;let Up=[];for(let Uh=0x0;Uh<Uw;Uh++){let Uz=UG[Uh];if(Uz&&typeof Uz==='object'&&z['call'](y,Uz)){let Un=Uz['value'];if(Array['isArray'](Un)){for(let Uq=0x0;Uq<Un['length'];Uq++)Up['push'](Un[Uq]);}}else Up['push'](Uz);}return Up;}
+function E(UK){return typeof UK==='object'||typeof UK==='function';}
+function F(UK){return{'value':UK,'writable':!![],'configurable':!![]};}
+function L0(UK,Uw){return UK&&E(UK)?UK:Uw;}
+function L1(UK,Uw){try{Q(UK,Uw);}catch(UG){}}
+function L2(UK,Uw){let UG=UK===null||UK===undefined?undefined:UK[Uw];if(UG===null||UG===undefined)return undefined;if(typeof UG!=='function')throw new TypeError('Method\x20is\x20not\x20callable');return UG;}
+function L3(UK){if(UK===null||typeof UK!=='object'&&typeof UK!=='function')throw new TypeError('Iterator\x20result\x20'+UK+'\x20is\x20not\x20an\x20object');}
+function L4(UK){let Uw=UK['done'];return{'done':Uw,'value':Uw?UK['value']:undefined};}
+function L5(UK){let Uw=L2(UK,Symbol['asyncIterator']),UG,Ul;if(Uw!==undefined)UG=l(Uw,UK,[]),Ul=![];else{let UI=L2(UK,Symbol['iterator']);if(UI===undefined)throw new TypeError(typeof UK+'\x20is\x20not\x20iterable');UG=l(UI,UK,[]),Ul=!![];}if(UG===null||typeof UG!=='object')throw new TypeError('Iterator\x20method\x20returned\x20a\x20non-object\x20value');let Up=UG['next'];if(typeof Up!=='function')throw new TypeError('Iterator\x20next\x20is\x20not\x20a\x20function');return{'iter':UG,'nextMethod':Up,'isSync':Ul};}
+function L6(UK){let Uw=[];for(let UG in UK){Uw['push'](UG);}return Uw;}
+function L7(UK){return Array['prototype']['slice']['call'](UK);}
+function L8(UK){return typeof UK==='function'&&UK['prototype']?UK['prototype']:UK;}
+function L9(UK){if(typeof UK==='function')return K(UK);let Uw=K(UK),UG=Uw&&D(Uw,'constructor'),Ul=UG&&UG['value'],Up=Ul&&typeof Ul==='function'&&(Ul['prototype']===Uw||K(Ul['prototype'])===K(Uw));if(Up)return K(Uw);return Uw;}
+function LL(UK,Uw){let UG=UK;while(UG!==null){let Ul=D(UG,Uw);if(Ul)return{'desc':Ul,'proto':UG};UG=K(UG);}return{'desc':null,'proto':UK};}
+function LU(UK,Uw){let UG=UK;while(UG){let Ul=UG['_$B9O60n'];if(Ul>=0x0){let Up=UG['_$y0D9dC'];if(Up){let UI=Uw(Up,Ul);if(UI!==undefined)return UI;}}UG=UG['_$y83uiT'];}}
+function LD(UK,Uw){LU(UK,function(UG,Ul){UG[Ul]===UG&&(UG[Ul]=Uw);});}
+function LO(UK){return LU(UK,function(Uw,UG){let Ul=Uw[UG];if(Ul!==Uw&&Ul!==undefined)return Ul;});}
+function Lc(UK,Uw){var UG=UK[Uw],Ul=function(){vmw_c74f0c['_$nugqlw']=!![];var Up=vmw_c74f0c['_$RFnivM'];vmw_c74f0c['_$RFnivM']=UK;try{return Reflect['apply'](UG,this,arguments);}finally{vmw_c74f0c['_$RFnivM']=Up;}};Object['defineProperties'](Ul,{'length':{'value':UG['length'],'configurable':!![]},'name':{'value':UG['name'],'configurable':!![]}}),UK[Uw]=Ul,(vmw_c74f0c['_$oky0Uz']||(vmw_c74f0c['_$oky0Uz']=new WeakMap()))['set'](Ul,UK);}
+vmw_c74f0c['_$KQGu5r']=Lc;
+function LQ(UK,Uw){let UG=UK[0x18];if(UK[UG[0xe]]===undefined||!Uw)return;let Ul=UK[UG[0x1]][UK[UG[0xe]]];v(Uw,'name',{'value':Ul,'writable':![],'enumerable':![],'configurable':!![]});}
+function LK(UK,Uw,UG){let Ul=Uw[0x18];if(!UK||Uw[Ul[0x7]]||Uw[Ul[0x8]]||Uw[Ul[0x6]])return;!N(UK)&&V(UK,{'b':Uw,'e':UG,'c':Uw});}
+function Lw(UK,Uw,UG,Ul,Up,UI){let UZ;if(UI){Ul?UZ={'LNuVtu'(){'use strict';let Uh=new.target!==undefined?new.target:vmw_c74f0c['_$qJxGrr'];return UK(Uw,arguments,UG,UZ,Uh,this);}}['LNuVtu']:UZ={'LNuVtu'(){let Uh=new.target!==undefined?new.target:vmw_c74f0c['_$qJxGrr'];return UK(Uw,arguments,UG,UZ,Uh,this);}}['LNuVtu'];try{delete UZ['prototype'];}catch(Uh){}}else Ul?UZ=function Uz(){'use strict';let Un=new.target!==undefined?new.target:vmw_c74f0c['_$qJxGrr'];return UK(Uw,arguments,UG,UZ,Un,this);}:UZ=function Un(){let Uq=new.target!==undefined?new.target:vmw_c74f0c['_$qJxGrr'];return UK(Uw,arguments,UG,UZ,Uq,this);};return V(UZ,{'b':Uw,'e':UG}),UZ;}
+function LG(UK,Uw,UG,Ul,Up){let UI;Ul?UI={'LNuVtu'(){'use strict';let UZ=new.target!==undefined?new.target:vmw_c74f0c['_$qJxGrr'];return UK(Uw,arguments,UG,UI,UZ,undefined,this);}}['LNuVtu']:UI={'LNuVtu'(){let UZ=new.target!==undefined?new.target:vmw_c74f0c['_$qJxGrr'];return UK(Uw,arguments,UG,UI,UZ,undefined,this);}}['LNuVtu'];if(H)L1(UI,H);return UI;}
+function Ll(UK,Uw,UG,Ul,Up,UI,UZ){let Uh;Up?Uh={'LNuVtu'(){'use strict';return UK(Uw,arguments,UG,Uh,vmw_c74f0c['_$RFnivM'],this);}}['LNuVtu']:Uh={'LNuVtu'(){return UK(Uw,arguments,UG,Uh,vmw_c74f0c['_$RFnivM'],this);}}['LNuVtu'];h['call'](Ul,Uh);let Uz=UZ?r:k,Un=UZ?b:R;if(Uz)L1(Uh,Uz);try{L(Uh,'prototype',{'value':Un?U(Un):U({}),'writable':!![],'enumerable':![],'configurable':![]});}catch(Uq){}return Uh;}
+function Lp(UK,Uw,UG,Ul){let Up=vmw_c74f0c['_$RFnivM'],UI;return UI={'LNuVtu':(...UZ)=>{return Up!==undefined&&(vmw_c74f0c['_$nugqlw']=!![],vmw_c74f0c['_$RFnivM']=Up),UK(Uw,UZ,UG,UI,undefined,Ul);}}['LNuVtu'],UI;}
+function LI(UK,Uw,UG,Ul){let Up;Up={'LNuVtu':(...UI)=>{return UK(Uw,UI,UG,Up,undefined,undefined,Ul);}}['LNuVtu'];if(H)L1(Up,H);return Up;}
+function LZ(UK,Uw,UG,Ul,Up,UI){let UZ=[void 0x0,void 0x0,void 0x0,void 0x0,void 0x0,void 0x0,void 0x0,void 0x0],Uh=0x0,Uz=UK[0x18],Un=new Array((UK[Uz[0x2]]||0x0)+(UK[Uz[0x3]]||0x0)),Uq=0x0,Ud=UK[Uz[0x1]],Ue=UK[Uz[0x0]],Uf=UK[Uz[0x4]]||W,UP=UK[Uz[0x5]]||W,Ua=Ue['length']>>0x1,UT=(UK[Uz[0x2]]*0x1f^UK[Uz[0x3]]*0x11^Ua*0xd^Ud['length']*0x7)>>>0x0&0x3,Ug,UY,Us;switch(UT){case 0x1:Ug=0x1,UY=0x0,Us=0x1;break;case 0x2:Ug=0x0,UY=Ua,Us=0x0;break;case 0x3:Ug=Ua,UY=0x0,Us=0x0;break;default:Ug=0x0,UY=0x1,Us=0x1;break;}let Ux=null,UW=null,UB=![],UM=undefined,Uy=![],UX=0x0,Uu=undefined,Ut=![],UJ=0x0,UC=undefined,UV=-0x1,UA=-0x1,UN=!!UK[Uz[0xa]],Uo=!!UK[Uz[0xb]],Uj=!!UK[Uz[0xc]],US=!!UK[Uz[0xd]],Um=UI,Uk=!!UK[Uz[0x6]];!UN&&!Uk&&(UI===undefined||UI===null)&&(UI=vmp);let UR=D6=>{UZ[Uh++]=D6;},Ur=()=>UZ[--Uh],Ub={['_$y0D9dC']:new Array(UK[Uz[0x17]]||0x0),['_$EgorAs']:null,['_$B9O60n']:-0x1,['_$y83uiT']:UG};if(Uw){let D6=UK[Uz[0x2]]||0x0;for(let D7=0x0,D8=Uw['length']<D6?Uw['length']:D6;D7<D8;D7++){Un[D7]=Uw[D7];}}let UH=(UN||!Uo)&&Uw?L7(Uw):null,Uv=null,Ui=![],UE=Un['length'],UF=null,D0=0x0;LQ(UK,Ul),LK(Ul,UK,UG);while(Uq<Ua){try{while(Uq<Ua){let D9=Uq<<Us,DL=Ue[Ug+D9],DU=Ue[UY+D9];var D1,D2,D3,D4;...}}(async function(){'use\x20strict';return vmK_f72eef(0x0,arguments,undefined,undefined,new.target,this);}());</code></pre>
+            </div>
+        </div>
+
+        <!-- TUTORIAL - MOBILE -->
+        <div class="tutorial-card">
+            <div class="section-title">
+                <span class="icon">📱</span> HƯỚNG DẪN CÀI ĐẶT TRÊN ĐIỆN THOẠI
+                <span class="line"></span>
+            </div>
+            <div class="steps">
+
+                <!-- Bước 1 -->
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <h4>Cài đặt trình duyệt <span class="hl">Kiwi Browser</span> hoặc <span class="hl">Firefox</span></h4>
+                        <p>
+                            Vào CH Play (Android) hoặc App Store (iOS) tải:
+                            <br>• <span class="hl">Kiwi Browser</span> (khuyên dùng - hỗ trợ extension Chrome)
+                            <br>• Hoặc <span class="hl">Firefox</span> + <span class="hl">Firefox Nightly</span>
+                        </p>
+                        <div class="img-placeholder">
+                            <div class="img-box"><span class="emoji">🦊</span> Tải Kiwi Browser<br>từ CH Play</div>
+                            <div class="img-box"><span class="emoji">🦊</span> Tải Firefox<br>từ App Store</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bước 2 -->
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <h4>Cài đặt <span class="hl">Tampermonkey</span> Extension</h4>
+                        <p>
+                            <strong>Trên Kiwi Browser:</strong><br>
+                            Mở Kiwi → Nhấn <span class="hl">⋮ (3 chấm)</span> góc phải trên → <span class="hl">Extensions</span><br>
+                            → <span class="hl">+ (From Store)</span> → Tìm <span class="hl">"Tampermonkey"</span> → Cài đặt.
+                            <br><br>
+                            <strong>Trên Firefox:</strong><br>
+                            Mở Firefox → <span class="hl">⋮ (3 chấm)</span> → <span class="hl">Add-ons</span><br>
+                            → Tìm <span class="hl">"Tampermonkey"</span> → Thêm vào Firefox.
+                        </p>
+                        <div class="img-placeholder">
+                            <div class="img-box"><span class="emoji">🔌</span> Vào Extensions<br>trên Kiwi</div>
+                            <div class="img-box"><span class="emoji">🔍</span> Tìm Tampermonkey<br>trên Store</div>
+                            <div class="img-box"><span class="emoji">✅</span> Nhấn Cài Đặt<br>Extension</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bước 3 -->
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <h4>Mở <span class="hl">Dashboard</span> Tampermonkey</h4>
+                        <p>
+                            Nhấn biểu tượng <span class="hl">🧩 Tampermonkey</span> trên thanh địa chỉ<br>
+                            → Chọn <span class="hl">"Dashboard"</span> (Bảng điều khiển).
+                        </p>
+                        <div class="img-placeholder">
+                            <div class="img-box"><span class="emoji">🧩</span> Nhấn icon<br>Tampermonkey</div>
+                            <div class="img-box"><span class="emoji">📊</span> Chọn Dashboard<br>từ menu xổ xuống</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bước 4 -->
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-content">
+                        <h4>Tạo <span class="hl">Script Mới</span></h4>
+                        <p>
+                            Trong Dashboard, nhấn nút <span class="hl">"+" (Add a new script)</span><br>
+                            ở góc trên bên trái màn hình.
+                        </p>
+                        <div class="img-placeholder">
+                            <div class="img-box"><span class="emoji">➕</span> Nhấn dấu +<br>góc trái trên</div>
+                            <div class="img-box"><span class="emoji">📝</span> Tab soạn thảo<br>mở ra</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bước 5 -->
+                <div class="step">
+                    <div class="step-num">5</div>
+                    <div class="step-content">
+                        <h4>Xóa code mẫu & Dán Script</h4>
+                        <p>
+                            • Chọn toàn bộ code mẫu → <span class="hl">Xóa hết</span> (Select All → Delete).<br>
+                            • Nhấn nút <span class="hl">📋 COPY</span> ở trên để sao chép script.<br>
+                            • Dán vào khung soạn thảo.
+                        </p>
+                        <div class="img-placeholder">
+                            <div class="img-box"><span class="emoji">📋</span> Copy script<br>từ trang này</div>
+                            <div class="img-box"><span class="emoji">📄</span> Dán vào khung<br>soạn thảo</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bước 6 -->
+                <div class="step">
+                    <div class="step-num">6</div>
+                    <div class="step-content">
+                        <h4><span class="hl">Lưu Script</span></h4>
+                        <p>
+                            Nhấn <span class="hl">"File" → "Save"</span> hoặc dùng phím tắt <span class="hl">Ctrl+S</span><br>
+                            (trên mobile: nhấn nút <span class="hl">💾 Save</span> trên thanh công cụ).
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Bước 7 -->
+                <div class="step">
+                    <div class="step-num">7</div>
+                    <div class="step-content">
+                        <h4>Kiểm tra Script hoạt động</h4>
+                        <p>
+                            Truy cập trang: <span class="path">linkhuongdan.online</span><br>
+                            Bạn sẽ thấy bảng điều khiển <span class="hl">"Goi La Soc"</span> xuất hiện<br>
+                            ở góc phải màn hình với <span class="hl">đèn LED xanh nhấp nháy</span>.
+                        </p>
+                        <div class="img-placeholder">
+                            <div class="img-box"><span class="emoji">💚</span> Đèn xanh<br>nhấp nháy</div>
+                            <div class="img-box"><span class="emoji">🎛️</span> Bảng điều khiển<br>góc phải</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="footer">
+            🐿️ SÓC : Tool Tự Động Octolink.vip 
+        </div>
+    </div>
+
+    <script>
+        function copyCode() {
+            const codeText = document.getElementById('scriptCode').querySelector('code').textContent;
+            navigator.clipboard.writeText(codeText).then(() => {
+                const btn = document.getElementById('copyBtn');
+                btn.textContent = '✅ ĐÃ SAO CHÉP!';
+                btn.classList.add('copied');
+                setTimeout(() => { btn.textContent = '📋 COPY'; btn.classList.remove('copied'); }, 2500);
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = codeText; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                document.body.appendChild(ta); ta.select();
+                try { document.execCommand('copy');
+                    const btn = document.getElementById('copyBtn');
+                    btn.textContent = '✅ ĐÃ SAO CHÉP!'; btn.classList.add('copied');
+                    setTimeout(() => { btn.textContent = '📋 COPY'; btn.classList.remove('copied'); }, 2500);
+                } catch(e) { alert('Vui lòng copy thủ công!'); }
+                document.body.removeChild(ta);
+            });
+        }
+    </script>
+</body>
+                                                                                                                                                                                                                                                                                                                                                    </html>
